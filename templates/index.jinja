@@ -4,9 +4,10 @@
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}" />
     </head>
     <body>
+        <a href="/refresh">Refresh</a>
         <ul>
             {% for email in emails %}
-                <li><a href="#">{{email['Subject']}}</a></li>
+                <li><a href="/discussion/{{email['msg'].gm_thread_id}}">{{email['body']['Subject']}}</a></li>
             {% endfor %}
         </ul>
     </body>

@@ -1,0 +1,11 @@
+<html>
+    <head>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/discussion.css') }}" />
+    </head>
+    <body>
+        {% for msg in msgs %}
+            <div class="msg">{{msg.message_raw}}</div>
+        {% endfor %}
+    </body>
+</html>
