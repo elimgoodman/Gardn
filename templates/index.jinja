@@ -1,0 +1,13 @@
+<html>
+    <head>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}" />
+    </head>
+    <body>
+        <ul>
+            {% for email in emails %}
+                <li><a href="#">{{email['Subject']}}</a></li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
