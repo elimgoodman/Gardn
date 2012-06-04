@@ -4,7 +4,7 @@
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/discussion.css') }}" />
     </head>
     <body>
-        {% for msg in msgs %}
+        {% for msg in discussion.messages %}
             <div class="msg">{{msg.message_raw}}</div>
         {% endfor %}
     </body>

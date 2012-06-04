@@ -6,8 +6,8 @@
     <body>
         <a href="/refresh">Refresh</a>
         <ul>
-            {% for email in emails %}
-                <li><a href="/discussion/{{email['msg'].gm_thread_id}}">{{email['body']['Subject']}}</a></li>
+            {% for discussion in discussions %}
+                <li><a href="/discussion/{{discussion.gm_thread_id}}">{{discussion.subject}}</a></li>
             {% endfor %}
         </ul>
     </body>
