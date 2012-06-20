@@ -1,0 +1,13 @@
+<html>
+    <head>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/reply.css') }}" />
+    </head>
+    <body>
+        <form method="POST">
+            <textarea name="message"></textarea>
+            <input type="submit" value="Send"/>
+        </form>
+    </body>
+</html>
+

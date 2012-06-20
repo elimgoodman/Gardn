@@ -1,4 +1,6 @@
-import json, imaplib, email, re, time, datetime
+import json, imaplib, email, re, time, datetime, smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEText import MIMEText
 
 from flask import Flask, render_template, jsonify, request, redirect
 import mongoengine as mongo
@@ -10,6 +12,24 @@ def connect():
 
 def getCurrentUser():
     return User.objects.get_or_create(email=EmailCredentials.ADDRESS)[0]
+
+def sendMail(subject, text, recipient):
+    gmailUser = EmailCredentials.ADDRESS;
+    gmailPassword = EmailCredentials.PASSWORD;
+    msg = MIMEMultipart()
+    msg['From'] = gmailUser
+    msg['To'] = recipient
+    msg['Subject'] = subject
+    msg.attach(MIMEText(text))
+
+    mailServer = smtplib.SMTP('smtp.gmail.com', 587)
+    mailServer.ehlo()
+    mailServer.starttls()
+    mailServer.ehlo()
+    mailServer.login(gmailUser, gmailPassword)
+    mailServer.sendmail(gmailUser, recipient, msg.as_string())
+    mailServer.close()
+    print('Sent email to %s' % recipient)
 
 class User(mongo.Document):
     email = mongo.StringField(unique=True)
@@ -84,7 +104,7 @@ def refresh():
                 recipient.save()
                 real_recipients.append(recipient)
 
-            (from_address, name) = email.utils.parseaddr(body['from'])
+            (name, from_address) = email.utils.parseaddr(body['from'])
             (from_user, _) = User.objects.get_or_create(email=from_address)
 
             (msg_raw, _) = Message.objects.get_or_create(gm_msg_id=id_parsed['gm_msg_id'])
@@ -118,6 +138,17 @@ def discussion(gm_thread_id):
     discussion = Discussion.objects.get(gm_thread_id=gm_thread_id)
     msgs = Message.objects(gm_thread_id=gm_thread_id).order_by('date')
     return render_template('discussion.jinja', msgs=msgs, discussion=discussion)
+
+@app.route('/discussion/<gm_thread_id>/reply', methods=['GET', 'POST'])
+def reply(gm_thread_id):
+    connect()
+
+    if request.method == 'POST':
+        discussion = Discussion.objects.get(gm_thread_id=gm_thread_id)
+        sendMail(discussion.subject, request.form['message'], "eli.m.goodman@gmail.com")
+        return redirect("/")
+    else:
+        return render_template('reply.jinja')
 
 if __name__ == '__main__':
     app.run(debug=True)
