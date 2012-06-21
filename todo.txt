@@ -1,0 +1,2 @@
+- Work out subject line stuff
+- make discussion identifier based on hash of original sender, subject, time sent
