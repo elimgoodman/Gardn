@@ -1,6 +1,7 @@
-import json, imaplib, email, re, time, datetime, smtplib
+import json, imaplib, email, re, time, datetime, smtplib, json
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from email.MIMEBase import MIMEBase
 
 from flask import Flask, render_template, jsonify, request, redirect
 import mongoengine as mongo
@@ -13,14 +14,17 @@ def connect():
 def getCurrentUser():
     return User.objects.get_or_create(email=EmailCredentials.ADDRESS)[0]
 
-def sendMail(subject, text, recipient):
+def sendMail(subject, msg_html, recipient):
     gmailUser = EmailCredentials.ADDRESS;
     gmailPassword = EmailCredentials.PASSWORD;
     msg = MIMEMultipart()
     msg['From'] = gmailUser
     msg['To'] = recipient
     msg['Subject'] = subject
-    msg.attach(MIMEText(text))
+
+    html = MIMEBase("text", "html")
+    html.set_payload(msg_html)
+    msg.attach(html)
 
     mailServer = smtplib.SMTP('smtp.gmail.com', 587)
     mailServer.ehlo()
