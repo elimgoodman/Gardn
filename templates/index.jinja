@@ -5,9 +5,17 @@
     </head>
     <body>
         <a href="/refresh">Refresh</a>
+        <a href="/compose">Compose</a>
         <ul>
             {% for discussion in discussions %}
-                <li><a href="/discussion/{{discussion.gm_thread_id}}">{{discussion.subject}}</a></li>
+                <li>
+                    ({{discussion.getNumMessages()}}) 
+                    <a href="/discussion/{{discussion.gm_thread_id}}">{{discussion.subject}}</a>
+                     - 
+                    {% for participant in discussion.getOtherParticipants() %}
+                        {{participant.email}}
+                    {% endfor %}
+                </li>
             {% endfor %}
         </ul>
     </body>

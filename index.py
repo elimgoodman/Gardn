@@ -14,26 +14,28 @@ def connect():
 def getCurrentUser():
     return User.objects.get_or_create(email=EmailCredentials.ADDRESS)[0]
 
-def sendMail(subject, msg_html, recipient):
+def sendMail(subject, msg_html, recipients):
     gmailUser = EmailCredentials.ADDRESS;
     gmailPassword = EmailCredentials.PASSWORD;
-    msg = MIMEMultipart()
-    msg['From'] = gmailUser
-    msg['To'] = recipient
-    msg['Subject'] = subject
-
-    html = MIMEBase("text", "html")
-    html.set_payload(msg_html)
-    msg.attach(html)
 
     mailServer = smtplib.SMTP('smtp.gmail.com', 587)
     mailServer.ehlo()
     mailServer.starttls()
     mailServer.ehlo()
     mailServer.login(gmailUser, gmailPassword)
-    mailServer.sendmail(gmailUser, recipient, msg.as_string())
+    for recipient in recipients:
+        msg = MIMEMultipart()
+        msg['From'] = gmailUser
+        msg['To'] = recipient
+        msg['Subject'] = subject
+
+        html = MIMEBase("text", "html")
+        html.set_payload(msg_html)
+        msg.attach(html)
+
+        mailServer.sendmail(gmailUser, recipient, msg.as_string())
+        print('Sent email to %s' % recipient)
     mailServer.close()
-    print('Sent email to %s' % recipient)
 
 class User(mongo.Document):
     email = mongo.StringField(unique=True)
@@ -69,6 +71,14 @@ class Discussion(mongo.Document):
     messages = mongo.SortedListField(mongo.ReferenceField(Message))
     participants = mongo.ListField(mongo.ReferenceField(User))
 
+    def getNumMessages(self):
+        print self.messages
+        return len(self.messages)
+    
+    def getOtherParticipants(self):
+        user = getCurrentUser()
+        return filter(lambda r: r != user, self.participants)
+
 app = Flask(__name__)
 
 @app.route('/refresh')
@@ -78,6 +88,11 @@ def refresh():
     mail = imaplib.IMAP4_SSL('imap.gmail.com')
     mail.login(EmailCredentials.ADDRESS, EmailCredentials.PASSWORD)
     boxes = ["inbox", "[Gmail]/Sent Mail"]
+
+    #TEMPORARY: clean all msgs from discussions
+    for discussion in Discussion.objects():
+        discussion.messages = []
+        discussion.save()
 
     for box in boxes:
         mail.select(box)
@@ -143,16 +158,25 @@ def discussion(gm_thread_id):
     msgs = Message.objects(gm_thread_id=gm_thread_id).order_by('date')
     return render_template('discussion.jinja', msgs=msgs, discussion=discussion)
 
-@app.route('/discussion/<gm_thread_id>/reply', methods=['GET', 'POST'])
+@app.route('/discussion/<gm_thread_id>/reply')
 def reply(gm_thread_id):
     connect()
 
-    if request.method == 'POST':
-        discussion = Discussion.objects.get(gm_thread_id=gm_thread_id)
-        sendMail(discussion.subject, request.form['message'], "eli.m.goodman@gmail.com")
-        return redirect("/")
-    else:
-        return render_template('reply.jinja')
+    discussion = Discussion.objects.get(gm_thread_id=gm_thread_id)
+    participant_emails = [p.email for p in discussion.getOtherParticipants()]
+    return render_template('compose.jinja', 
+            participants=",".join(participant_emails),
+            subject=discussion.subject)
+
+@app.route('/send', methods=['POST'])
+def send():
+    participants = request.form['participants'].split(',')
+    sendMail(request.form['subject'], request.form['message'], participants)
+    return redirect("/")
+
+@app.route('/compose')
+def compose():
+    return render_template('compose.jinja')
 
 if __name__ == '__main__':
     app.run(debug=True)
