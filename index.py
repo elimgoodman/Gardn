@@ -72,7 +72,6 @@ class Discussion(mongo.Document):
     participants = mongo.ListField(mongo.ReferenceField(User))
 
     def getNumMessages(self):
-        print self.messages
         return len(self.messages)
     
     def getOtherParticipants(self):
@@ -177,6 +176,10 @@ def send():
 @app.route('/compose')
 def compose():
     return render_template('compose.jinja')
+
+@app.route('/parse')
+def parse():
+    return jsonify(href=request.args['href'])
 
 if __name__ == '__main__':
     app.run(debug=True)
